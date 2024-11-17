@@ -1,6 +1,7 @@
 package email;
 
 import io.vavr.test.Property;
+import org.approvaltests.Approvals;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -33,6 +34,14 @@ class EncryptionTest {
                 )
                 .check()
                 .assertIsSatisfied();
+    }
+
+    @Test
+    void shouldDecryptEmail() throws Exception {
+        String encryptedEmail = FileUtils.loadFile("EncryptedEmail.txt");
+        String decryptedEmail = encryption.decrypt(encryptedEmail);
+
+        Approvals.verify(decryptedEmail);
     }
 
     private static Encryption createEncryption() {
