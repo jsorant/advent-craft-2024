@@ -13,36 +13,43 @@ public String composeMessage(String reindeerName, String currentLocation, int nu
 
 There are 4 parameters of primitive types... it can be really confusing when using this kind of code.
 
-Indeed, even if he has written it, Santa made a mistake by probably inverting the parameters of the same type `numbersOfDaysForComingBack` and `numberOfDaysBeforeChristmas`.
+Indeed, even if he has written it, Santa made a mistake by probably inverting the parameters of the same
+type `numbersOfDaysForComingBack` and `numberOfDaysBeforeChristmas`.
 Primitive types are very general and could represent anything... they can not carry behaviors as well...
 
-We may use a data structure to [`fight primitive obsession`](https://xtrem-tdd.netlify.app/Flavours/Design/no-primitive-types) and represent the `reindeer` information here.
+We may use a data structure
+to [`fight primitive obsession`](https://xtrem-tdd.netlify.app/Flavours/Design/no-primitive-types) and represent
+the `reindeer` information here.
 
 > Primitive obsession is a code smell in which primitive data types are used excessively to represent your data models.
 
-### Introduce Reindeer Object
+### Introduce communication.Reindeer Object
+
 Our IDEs can really help us fight this `code smell`.
 
 - `Introduce Parameter Object` refactoring can help us
-  - It will create a `class` based on our method parameters
+    - It will create a `class` based on our method parameters
 
 ![Introduce Parameter Object](img/introduce-parameter-object.webp)
 
 - Configure the `class` by selecting which parameters should go inside the class
-    - We exclude `numberOfDaysBeforeChristmas` to create a cohesive abstraction of the `Reindeer` in this context
+    - We exclude `numberOfDaysBeforeChristmas` to create a cohesive abstraction of the `communication.Reindeer` in this
+      context
 
 ![Configure object](img/configure-object.webp)
 
 - Here is the impact on the code
-  - The IDE has instantiated the `Reindeer` in the test by itself 😎
+    - The IDE has instantiated the `communication.Reindeer` in the test by itself 😎
 
 ```java
-// Reindeer
-public record Reindeer(String reindeerName, String currentLocation, int numbersOfDaysForComingBack) {
+// communication.Reindeer
+public record communication.
+
+Reindeer(String reindeerName, String currentLocation, int numbersOfDaysForComingBack) {
 }
 
 // SantaCommunicator
-public String composeMessage(Reindeer reindeer, int numberOfDaysBeforeChristmas) {
+public String composeMessage(communication.Reindeer reindeer, int numberOfDaysBeforeChristmas) {
     var daysBeforeReturn = daysBeforeReturn(reindeer.numbersOfDaysForComingBack(), numberOfDaysBeforeChristmas);
 
     return "Dear " + reindeer.reindeerName() + ", please return from " + reindeer.currentLocation() +
@@ -52,13 +59,13 @@ public String composeMessage(Reindeer reindeer, int numberOfDaysBeforeChristmas)
 // SantaCommunicatorTest
 @Test
 void composeMessage() {
-    var message = communicator.composeMessage(new Reindeer(DASHER, NORTH_POLE, 5), numberOfDayBeforeChristmas);
+    var message = communicator.composeMessage(new communication.Reindeer(DASHER, NORTH_POLE, 5), numberOfDayBeforeChristmas);
     assertThat(message).isEqualTo("Dear Dasher, please return from North Pole in 17 day(s) to be ready and rest before Christmas.");
 }
 ```
 
 - We do the same for the `isOverdue` method
-  - The configuration is slightly different because the `class` already exists here
+    - The configuration is slightly different because the `class` already exists here
 
 ![Configure object](img/configure-existing-class.webp)
 
@@ -66,7 +73,7 @@ void composeMessage() {
 
 ```java
 // No need to have a redundant reindeerName field
-public record Reindeer(String name, String location, int numbersOfDaysForComingBack) {
+public record communication.Reindeer(String name, String location, int numbersOfDaysForComingBack) {
 }
 ```
 
@@ -80,11 +87,11 @@ public class SantaCommunicator {
         this.numberOfDaysToRest = numberOfDaysToRest;
     }
 
-    public String composeMessage(Reindeer reindeer, int numberOfDaysBeforeChristmas) {
+    public String composeMessage(communication.Reindeer reindeer, int numberOfDaysBeforeChristmas) {
       ...
     }
 
-    public boolean isOverdue(Reindeer reindeer, int numberOfDaysBeforeChristmas, Logger logger) {
+    public boolean isOverdue(communication.Reindeer reindeer, int numberOfDaysBeforeChristmas, Logger logger) {
       ...
     }
 
@@ -94,9 +101,11 @@ public class SantaCommunicator {
 }
 ```
 
-`int numberOfDaysBeforeChristmas` is passed as an argument in each method... we may pass it to the `SantaCommunicator` constructor.
+`int numberOfDaysBeforeChristmas` is passed as an argument in each method... we may pass it to the `SantaCommunicator`
+constructor.
 
 ### Configure the `SantaCommunicator`
+
 We may inject `numberOfDaysToRest` and `numberOfDaysBeforeChristmas` in the constructor.
 
 🔴 we add an expectation on the `SantaCommunicator` constructor from our test
@@ -116,6 +125,7 @@ public SantaCommunicator(int numberOfDaysToRest, int numberOfDayBeforeChristmas)
 ```
 
 🔵 let's use a type to represent the configuration
+
 - We use the same refactoring technique:
 
 ![Create ctor](img/introduce-configuration.webp)
@@ -133,7 +143,7 @@ public SantaCommunicator(Configuration configuration) {
 ```
 
 - We can store the `Configuration` in a private field
-  - And use it in the methods below
+    - And use it in the methods below
 
 ```java
 public class SantaCommunicator {
@@ -149,14 +159,14 @@ public class SantaCommunicator {
         this.configuration = configuration;
     }
 
-    public String composeMessage(Reindeer reindeer, int numberOfDaysBeforeChristmas) {
+    public String composeMessage(communication.Reindeer reindeer, int numberOfDaysBeforeChristmas) {
         var daysBeforeReturn = daysBeforeReturn(reindeer.numbersOfDaysForComingBack(), configuration.numberOfDayBeforeChristmas());
 
         return "Dear " + reindeer.name() + ", please return from " + reindeer.location() +
                 " in " + daysBeforeReturn + " day(s) to be ready and rest before Christmas.";
     }
 
-    public boolean isOverdue(Reindeer reindeer, int numberOfDaysBeforeChristmas, Logger logger) {
+    public boolean isOverdue(communication.Reindeer reindeer, int numberOfDaysBeforeChristmas, Logger logger) {
         if (daysBeforeReturn(reindeer.numbersOfDaysForComingBack(), configuration.numberOfDayBeforeChristmas()) <= 0) {
             logger.log("Overdue for " + reindeer.name() + " located " + reindeer.location() + ".");
             return true;
@@ -171,7 +181,7 @@ public class SantaCommunicator {
 ```
 
 - We can now clean our code
-  - Our IDE is giving us a lot of hints on that
+    - Our IDE is giving us a lot of hints on that
 
 ![IDE hints](img/ide-hints.webp)
 
@@ -189,14 +199,14 @@ public class SantaCommunicator {
         this.configuration = configuration;
     }
 
-    public String composeMessage(Reindeer reindeer) {
+    public String composeMessage(communication.Reindeer reindeer) {
         var daysBeforeReturn = daysBeforeReturn(reindeer.numbersOfDaysForComingBack());
 
         return "Dear " + reindeer.name() + ", please return from " + reindeer.location() +
                 " in " + daysBeforeReturn + " day(s) to be ready and rest before Christmas.";
     }
 
-    public boolean isOverdue(Reindeer reindeer, Logger logger) {
+    public boolean isOverdue(communication.Reindeer reindeer, Logger logger) {
         if (daysBeforeReturn(reindeer.numbersOfDaysForComingBack()) <= 0) {
             logger.log("Overdue for " + reindeer.name() + " located " + reindeer.location() + ".");
             return true;
@@ -250,13 +260,14 @@ class SantaCommunicatorTest {
         ).isFalse();
     }
 
-    private static Reindeer reindeer(int numbersOfDaysForComingBack) {
-        return new Reindeer("Dasher", "North Pole", numbersOfDaysForComingBack);
+    private static communication.Reindeer reindeer(int numbersOfDaysForComingBack) {
+        return new communication.Reindeer("Dasher", "North Pole", numbersOfDaysForComingBack);
     }
 }
 ```
 
 ### Reflect
+
 - When was the last time you observed `primitive types everywhere`?
 - `How could it be useful to use the refactoring practiced here?
 - `Which cohesive data` structures could be introduced in your `current project`?
